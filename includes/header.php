@@ -6,7 +6,10 @@ if (session_status() === PHP_SESSION_NONE) {
 
 <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
     <div class="container">
-        <a class="navbar-brand fw-bold" href="index.php">🧠 Daily MoodBoard</a>
+        <a class="navbar-brand d-flex align-items-center fw-bold" href="index.php">
+            <img src="assets\images\moodboard_logo.png" alt="Logo" width="40" height="40" class="me-2">
+            
+        </a>
 
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
             <span class="navbar-toggler-icon"></span>
