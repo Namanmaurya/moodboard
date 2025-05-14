@@ -3,16 +3,31 @@ include 'includes/db.php';
 session_start();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $name     = mysqli_real_escape_string($conn, $_POST['name']);
-    $email    = mysqli_real_escape_string($conn, $_POST['email']);
+    $name = mysqli_real_escape_string($conn, $_POST['name']);
+    $email = mysqli_real_escape_string($conn, $_POST['email']);
     $password = password_hash($_POST['password'], PASSWORD_DEFAULT);
+    $dob = mysqli_real_escape_string($conn, $_POST['dob']);
+    $bio = mysqli_real_escape_string($conn, $_POST['bio']);
+
+    // Profile pic upload
+    $profilePic = '';
+    if (isset($_FILES['profile_pic']) && $_FILES['profile_pic']['error'] == 0) {
+        $targetDir = "uploads/";
+        $fileName = uniqid() . "_" . basename($_FILES["profile_pic"]["name"]);
+        $targetFile = $targetDir . $fileName;
+
+        if (move_uploaded_file($_FILES["profile_pic"]["tmp_name"], $targetFile)) {
+            $profilePic = $fileName;
+        }
+    }
 
     // Check if email already exists
     $check = mysqli_query($conn, "SELECT * FROM users WHERE email = '$email'");
     if (mysqli_num_rows($check) > 0) {
         $error = "Email already registered!";
     } else {
-        $query = "INSERT INTO users (name, email, password) VALUES ('$name', '$email', '$password')";
+        $query = "INSERT INTO users (name, email, password, dob, bio, profile_pic)
+                  VALUES ('$name', '$email', '$password', '$dob', '$bio', '$profilePic')";
         if (mysqli_query($conn, $query)) {
             $_SESSION['success'] = "Registered successfully! Please login.";
             header('Location: login.php');
@@ -24,8 +39,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 ?>
 
+
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <title>Register - MoodBoard</title>
@@ -79,6 +96,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     </style>
 </head>
+
 <body>
     <div class="login-card text-center">
         <img src="assets\images\moodboard_logo.png" alt="MoodBoard Logo" class="brand-logo">
@@ -90,28 +108,44 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             echo "<div class='alert alert-success'>" . $_SESSION['success'] . "</div>";
             unset($_SESSION['success']);
         }
-        if (!empty($error)) echo "<div class='alert alert-danger'>$error</div>";
+        if (!empty($error))
+            echo "<div class='alert alert-danger'>$error</div>";
         ?>
 
-        <form method="POST" action="">
+        <form method="POST" action="" enctype="multipart/form-data">
             <div class="mb-3 text-start">
                 <label for="name" class="form-label">Name</label>
-                <input type="text" name="name" class="form-control" id="name" placeholder="Your full name" required>
+                <input type="text" name="name" class="form-control" id="name" required>
             </div>
             <div class="mb-3 text-start">
                 <label for="email" class="form-label">Email address</label>
-                <input type="email" name="email" class="form-control" id="email" placeholder="you@example.com" required>
+                <input type="email" name="email" class="form-control" id="email" required>
+            </div>
+            <div class="mb-3 text-start">
+                <label for="dob" class="form-label">Date of Birth</label>
+                <input type="date" name="dob" class="form-control" id="dob" required>
+            </div>
+            <div class="mb-3 text-start">
+                <label for="bio" class="form-label">Bio</label>
+                <textarea name="bio" class="form-control" id="bio" rows="3" placeholder="Tell us about yourself..."
+                    required></textarea>
+            </div>
+            <div class="mb-3 text-start">
+                <label for="profile_pic" class="form-label">Profile Picture</label>
+                <input type="file" name="profile_pic" class="form-control" id="profile_pic" accept="image/*" required>
             </div>
             <div class="mb-4 text-start">
                 <label for="password" class="form-label">Password</label>
-                <input type="password" name="password" class="form-control" id="password" placeholder="Create a password" required minlength="6">
+                <input type="password" name="password" class="form-control" id="password" required minlength="6">
             </div>
             <button type="submit" class="btn btn-primary w-100">Register</button>
         </form>
+
 
         <div class="mt-3 text-muted">
             Already have an account? <a href="login.php">Login here</a>
         </div>
     </div>
 </body>
+
 </html>

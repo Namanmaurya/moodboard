@@ -1,14 +1,25 @@
 <?php
+// Include db and session if not already included
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
+include_once 'db.php';
+
+$user_id = $_SESSION['user_id'] ?? 0;
+
+// Get count of unread notifications
+$notifQuery = "SELECT COUNT(*) AS unread_count FROM notifications WHERE recipient_id = '$user_id' AND is_read = 0";
+$notifResult = mysqli_query($conn, $notifQuery);
+$notifData = mysqli_fetch_assoc($notifResult);
+$unreadCount = $notifData['unread_count'];
 ?>
+
 
 <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
     <div class="container">
         <a class="navbar-brand d-flex align-items-center fw-bold" href="index.php">
             <img src="assets\images\moodboard_logo.png" alt="Logo" width="40" height="40" class="me-2">
-            
+
         </a>
 
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
@@ -18,6 +29,16 @@ if (session_status() === PHP_SESSION_NONE) {
         <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
             <ul class="navbar-nav">
                 <?php if (isset($_SESSION['user_id'])): ?>
+                    <li class="nav-item">
+                        <a class="nav-link" href="notifications.php">
+                            🔔 Notifications
+                            <?php if ($unreadCount > 0): ?>
+                                <span class="badge bg-danger"><?php echo $unreadCount; ?></span>
+                            <?php endif; ?>
+                        </a>
+                    </li>
+
+
                     <li class="nav-item">
                         <a class="nav-link" href="post.php">+ Post Mood</a>
                     </li>

@@ -11,6 +11,18 @@ if (!isset($_SESSION['user_id'])) {
 $user_id = $_SESSION['user_id'];
 $mood_id = isset($_GET['mood_id']) ? (int) $_GET['mood_id'] : 0;
 
+$moodQuery = mysqli_query($conn, "SELECT user_id FROM moods WHERE id = '$mood_id'");
+$mood = mysqli_fetch_assoc($moodQuery);
+
+
+// Insert notification only if it's a like and not already liked
+if ($isLiked == 0 && $mood['user_id'] != $user_id) {
+    $insertNotif = "INSERT INTO notifications (recipient_id, sender_id, mood_id, type) 
+                    VALUES ('{$mood['user_id']}', '$user_id', '$mood_id', 'like')";
+    mysqli_query($conn, $insertNotif);
+}
+
+
 // Check if the mood exists
 $query = "SELECT * FROM moods WHERE id = '$mood_id'";
 $result = mysqli_query($conn, $query);

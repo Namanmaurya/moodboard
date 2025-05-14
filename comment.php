@@ -2,6 +2,10 @@
 include 'includes/db.php';
 session_start();
 
+// Get mood owner to notify
+$moodQuery = mysqli_query($conn, "SELECT user_id FROM moods WHERE id = '$mood_id'");
+$mood = mysqli_fetch_assoc($moodQuery);
+
 if (!isset($_SESSION['user_id'])) {
     header("Location: login.php");
     exit();
@@ -19,5 +23,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     header("Location: index.php");
     exit();
+}
+
+// Notify the owner (except self-comments)
+if ($mood['user_id'] != $user_id) {
+    $insertNotif = "INSERT INTO notifications (recipient_id, sender_id, mood_id, type) 
+                    VALUES ('{$mood['user_id']}', '$user_id', '$mood_id', 'comment')";
+    mysqli_query($conn, $insertNotif);
 }
 ?>
