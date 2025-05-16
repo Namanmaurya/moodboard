@@ -9,7 +9,6 @@ if (!isset($_GET['user_id'])) {
 
 $profile_user_id = (int) $_GET['user_id'];
 
-// Fetch profile user info
 $user_query = "SELECT * FROM users WHERE id = '$profile_user_id'";
 $user_result = mysqli_query($conn, $user_query);
 $profile_user = mysqli_fetch_assoc($user_result);
@@ -19,12 +18,10 @@ if (!$profile_user) {
     exit();
 }
 
-// Now you can safely use $profile_user
 $profile_image = !empty($profile_user['profile']) ? 'uploads/' . $profile_user['profile'] : 'assets/images/default_profile.png';
 $bio = !empty($profile_user['bio']) ? $profile_user['bio'] : "This user hasn't added a bio yet.";
 $dob = !empty($profile_user['dob']) ? date("F d, Y", strtotime($profile_user['dob'])) : "Not provided";
 
-// Fetch moods of this user
 $moods_query = "SELECT moods.*, 
                 (SELECT COUNT(*) FROM moods_likes WHERE mood_id = moods.id) AS likes_count,
                 (SELECT COUNT(*) FROM moods_likes WHERE mood_id = moods.id AND user_id = '{$_SESSION['user_id']}') AS user_liked
@@ -34,271 +31,291 @@ $moods_query = "SELECT moods.*,
 $moods_result = mysqli_query($conn, $moods_query);
 ?>
 
-
 <!DOCTYPE html>
 <html lang="en">
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?php echo htmlspecialchars($profile_user['name']); ?>'s Profile</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Bootstrap & FontAwesome -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
 
     <style>
         body {
-            background: linear-gradient(to right, #f0f8ff, #e6f7ff);
-            font-family: 'Arial', sans-serif;
+            background: linear-gradient(to right, #f8f9fa, #e0f7fa);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        h2 {
+            font-weight: 600;
+        }
+
+        p {
+            margin-bottom: 5px !important;
         }
 
         .profile-header {
-            background-color: #ffffff;
-            border-radius: 15px;
+            background: #ffffff;
             padding: 20px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-            margin-bottom: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
         }
 
-        .profile-header img {
-            border: 4px solid #007bff;
-            padding: 3px;
-            max-width: 100%;
-            height: auto;
-        }
-
-        .profile-header h2 {
-            font-size: 1.8rem;
-            color: #333;
-        }
-
-        .profile-header p {
-            font-size: 1rem;
-            color: #555;
+        .profile-pic {
+            width: 150px;
+            object-fit: contain;
         }
 
         .card {
-            border: none;
-            border-radius: 15px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-            transition: transform 0.3s ease;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
         }
 
-        .card:hover {
-            transform: translateY(-5px);
+        .card-title_emoji {
+            font-size: 2rem;
+            margin-right: 10px;
+            display: inline-block;
         }
 
-        .card-body {
-            padding: 20px;
+        .card img {
+            width: 300px;
+            object-fit: contain;
         }
 
-        .card-title {
-            font-size: 1.2rem;
-            font-weight: bold;
-            color: #007bff;
+        .btn-outline-primary {
+            transition: all 0.3s ease-in-out;
         }
 
-        .card-text {
-            font-size: 1rem;
-            color: #333;
+        .btn-outline-primary:hover {
+            background-color: #007bff;
+            color: white;
         }
 
         .comment {
-            background-color: #f1f1f1;
+            background-color: #f8f9fa;
+            border-left: 3px solid #007BFF;
             border-radius: 10px;
-            padding: 8px;
-            margin-top: 8px;
+            padding: 10px;
+            margin-top: 10px;
+            font-size: 0.95rem;
         }
 
         .comment-author {
-            font-weight: bold;
+            font-weight: 600;
+            margin-bottom: 2px;
         }
 
         .comment-time {
             font-size: 0.8rem;
             color: #888;
+            margin-top: 2px;
         }
 
-        .comment-form {
-            margin-top: 20px;
+        .toggle-buttons {
+            margin-bottom: 1rem;
+            display: flex;
+            gap: 10px;
         }
 
-        .comment-form input[type="text"] {
-            border-radius: 20px;
-            padding-left: 15px;
-        }
-
-        .btn-sm {
-            border-radius: 20px;
-            padding: 5px 15px;
-            font-weight: 500;
-        }
-
-        /* Responsive Adjustments */
-        @media (max-width: 768px) {
+        @media screen and (max-width: 768px) {
             .profile-header .row {
-                flex-direction: column;
                 text-align: center;
             }
 
-            .profile-header .col-md-4,
-            .profile-header .col-md-8 {
-                width: 100%;
+            .profile-header .col-md-3,
+            .profile-header .col-md-5 {
+                margin-bottom: 15px;
             }
 
-            .card-title small {
-                display: block;
-                float: none !important;
-                margin-top: 5px;
+            .profile-pic {
+                width: 120px;
+                height: 120px;
+            }
+
+            .card-title_emoji {
+                font-size: 1.5rem;
             }
 
             .comment-form {
                 flex-direction: column;
+                gap: 8px;
             }
 
             .comment-form input[type="text"] {
                 width: 100%;
-                margin-bottom: 10px;
             }
 
             .comment-form button {
                 width: 100%;
             }
-
-            .card-body {
-                padding: 15px;
-            }
-
-            .card-text,
-            .card-title {
-                font-size: 1rem;
-            }
-
-            .profile-header h2 {
-                font-size: 1.4rem;
-            }
         }
 
-        @media (max-width: 480px) {
-            .profile-header img {
+        @media screen and (max-width: 480px) {
+            h2 {
+                font-size: 1.5rem;
+            }
+
+            .profile-pic {
                 width: 100px;
                 height: 100px;
             }
-
-            .btn-sm {
-                font-size: 0.85rem;
-            }
-
-            .card-text,
-            .comment {
-                font-size: 0.95rem;
-            }
-
-            .profile-header p {
-                font-size: 0.95rem;
-            }
         }
     </style>
-
 
 </head>
 
 <body>
     <?php include 'includes/header.php'; ?>
 
-    <div class="container mt-5">
+    <div class="container">
         <div class="row">
             <div class="col-md-12">
-                <div class="profile-header text-center">
-                    <div class="row">
-                        <div class="col-md-4">
-                            <div class="profile_header_img">
-                                <img src="<?php echo $profile_image; ?>" alt="Profile Picture"
-                                    class="rounded-circle mb-3" width="120" height="120" style="object-fit: cover;">
-                            </div>
+                <!-- Profile Header -->
+                <div class="profile-header text-center mb-4">
+                    <div class="row align-items-center">
+                        <div class="col-md-2"></div>
+                        <div class="col-md-3">
+                            <img src="<?php echo $profile_image; ?>" alt="Profile Picture" class="profile-pic">
                         </div>
-                        <div class="col-md-8">
-                            <h2><?php echo htmlspecialchars($profile_user['name']); ?>'s MoodBoard 🧠</h2>
-                            <p class="text-muted">
-                                @<?php echo strtolower(str_replace(' ', '', $profile_user['name'])); ?></p>
-                            <p class="mt-2"><strong>Bio:</strong> <?php echo nl2br(htmlspecialchars($bio)); ?></p>
-                            <p class="text-muted"><strong>Date of Birth:</strong> <?php echo $dob; ?></p>
+                        <div class="col-md-5 text-md-start">
+                            <h2>@<?php echo htmlspecialchars($profile_user['name']); ?></h2>
+                            <p><strong>Bio:</strong> <?php echo nl2br(htmlspecialchars($bio)); ?></p>
+                            <p><strong>Date of Birth:</strong> <?php echo $dob; ?></p>
+                        </div>
+                        <div class="col-md-2">
+
                         </div>
                     </div>
                 </div>
-
             </div>
-        </div>
 
+            <!-- Moods Grid -->
+            <?php if (mysqli_num_rows($moods_result) > 0): ?>
+                <div class="row">
+                    <?php while ($row = mysqli_fetch_assoc($moods_result)): ?>
+                        <div class="col-md-4 mb-4">
+                            <div class="card h-100">
+                                <div class="card-body d-flex flex-column">
+                                    <h5 class="card-title">
+                                        <div class="card-title_emoji"><?php echo $row['mood_emoji']; ?></div>
+                                        <small class="text-muted float-end">
+                                            <?php echo date("M d, Y h:i A", strtotime($row['created_at'])); ?>
+                                        </small>
+                                    </h5>
+                                    <p class="card-text"><?php echo nl2br(htmlspecialchars($row['message'])); ?></p>
 
-        <!-- Moods Feed -->
-        <?php if (mysqli_num_rows($moods_result) > 0): ?>
-            <?php while ($row = mysqli_fetch_assoc($moods_result)): ?>
-                <div class="card mb-4">
-                    <div class="card-body">
-                        <h5 class="card-title">
-                            <?php echo $row['mood_emoji']; ?>
-                            <small
-                                class="text-muted float-end"><?php echo date("M d, Y h:i A", strtotime($row['created_at'])); ?></small>
-                        </h5>
-                        <p class="card-text"><?php echo nl2br(htmlspecialchars($row['message'])); ?></p>
+                                    <div class="d-flex gap-2 mb-3">
+                                        <?php if (!empty($row['image'])): ?>
+                                            <button type="button" class="btn btn-outline-primary btn-sm btn-view-image"
+                                                data-bs-toggle="modal" data-bs-target="#imageModal"
+                                                data-image-src="uploads/<?php echo $row['image']; ?>">
+                                                View Image
+                                            </button>
+                                        <?php endif; ?>
 
-                        <?php if (!empty($row['image'])): ?>
-                            <img src="uploads/<?php echo $row['image']; ?>" class="img-fluid rounded mb-3" alt="Mood Image">
-                        <?php endif; ?>
+                                        <button type="button" class="btn btn-outline-primary btn-sm btn-toggle-comments">
+                                            View Comments
+                                        </button>
+                                    </div>
 
-                        <div class="d-flex align-items-center">
-                            <a href="like.php?mood_id=<?php echo $row['id']; ?>"
-                                class="btn btn-sm <?php echo ($row['user_liked'] > 0) ? 'btn-danger' : 'btn-outline-primary'; ?>">
-                                <?php echo ($row['user_liked'] > 0) ? '💔 Unlike' : '❤️ Like'; ?>
-                            </a>
-                            <span class="ms-2"><?php echo $row['likes_count']; ?> Likes</span>
-                        </div>
+                                    <!-- Comment Form -->
+                                    <form action="comment.php" method="POST" class="d-flex comment-form mb-3">
+                                        <input type="hidden" name="mood_id" value="<?php echo $row['id']; ?>">
+                                        <input type="text" name="comment" class="form-control me-2"
+                                            placeholder="Write a comment..." required>
+                                        <button type="submit" class="btn btn-primary btn-sm">Post</button>
+                                    </form>
 
-                        <!-- Comment Form -->
-                        <form action="comment.php" method="POST" class="d-flex comment-form">
-                            <input type="hidden" name="mood_id" value="<?php echo $row['id']; ?>">
-                            <input type="text" name="comment" class="form-control me-2" placeholder="Write a comment..."
-                                required>
-                            <button type="submit" class="btn btn-primary btn-sm">Post</button>
-                        </form>
-
-                        <!-- Show Comments -->
-                        <?php
-                        $moodId = $row['id'];
-                        $commentQuery = "SELECT moods_comments.comment, moods_comments.created_at, users.name
+                                    <!-- Comments -->
+                                    <?php
+                                    $moodId = $row['id'];
+                                    $commentQuery = "SELECT moods_comments.comment, moods_comments.created_at, users.name
                                          FROM moods_comments
                                          JOIN users ON moods_comments.user_id = users.id
                                          WHERE moods_comments.mood_id = '$moodId'
                                          ORDER BY moods_comments.created_at ASC";
-                        $commentResult = mysqli_query($conn, $commentQuery);
-                        ?>
-                        <div class="mt-3">
-                            <?php while ($comment = mysqli_fetch_assoc($commentResult)): ?>
-                                <div class="comment">
-                                    <div class="comment-author"><?php echo htmlspecialchars($comment['name']); ?>:</div>
-                                    <span><?php echo nl2br(htmlspecialchars($comment['comment'])); ?></span>
-                                    <small
-                                        class="comment-time"><?php echo date("M d, h:i A", strtotime($comment['created_at'])); ?></small>
+                                    $commentResult = mysqli_query($conn, $commentQuery);
+                                    ?>
+                                    <div class="comments" style="display:none;">
+                                        <?php while ($comment = mysqli_fetch_assoc($commentResult)): ?>
+                                            <div class="comment">
+                                                <div class="comment-author"><?php echo htmlspecialchars($comment['name']); ?>:</div>
+                                                <span><?php echo nl2br(htmlspecialchars($comment['comment'])); ?></span>
+                                                <div class="comment-time">
+                                                    <?php echo date("M d, h:i A", strtotime($comment['created_at'])); ?>
+                                                </div>
+                                            </div>
+                                        <?php endwhile; ?>
+                                    </div>
                                 </div>
-                            <?php endwhile; ?>
+                            </div>
                         </div>
-                    </div>
+                    <?php endwhile; ?>
                 </div>
-            <?php endwhile; ?>
-        <?php else: ?>
+            <?php else: ?>
+                <p class="text-center text-muted">This user hasn't shared any moods yet.</p>
+            <?php endif; ?>
 
-            <div class="row">
-                <div class="col-md-12">
-                    <div class="not_post">
-                        <p class="text-center text-muted">This user hasn't shared any moods yet.</p>
-                    </div>
-                </div>
-            </div>
-
-
-        <?php endif; ?>
+        </div>
     </div>
 
     <?php include 'includes/footer.php'; ?>
+
+    <!-- Image Modal -->
+    <div class="modal fade" id="imageModal" tabindex="-1" aria-labelledby="imageModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content bg-transparent border-0 shadow-none">
+                <div class="modal-body p-0">
+                    <img src="" alt="Mood Image" id="modalImage" class="rounded" style="width:100%;" />
+                </div>
+                <div class="modal-footer border-0 justify-content-center">
+                    <button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS Bundle (includes Popper) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Toggle comments visibility
+            document.querySelectorAll('.btn-toggle-comments').forEach(btn => {
+                btn.addEventListener('click', function () {
+                    // Find closest card-body parent
+                    const cardBody = this.closest('.card-body');
+                    const comments = cardBody.querySelector('.comments');
+                    if (!comments) return;
+                    if (comments.style.display === 'none' || comments.style.display === '') {
+                        comments.style.display = 'block';
+                        this.textContent = 'Hide Comments';
+                    } else {
+                        comments.style.display = 'none';
+                        this.textContent = 'View Comments';
+                    }
+                });
+            });
+
+            // Show image in modal
+            const imageModal = document.getElementById('imageModal');
+            imageModal.addEventListener('show.bs.modal', function (event) {
+                const button = event.relatedTarget;
+                const imageSrc = button.getAttribute('data-image-src');
+                const modalImage = imageModal.querySelector('#modalImage');
+                modalImage.src = imageSrc;
+            });
+
+            // Clear modal image on close
+            imageModal.addEventListener('hidden.bs.modal', function () {
+                const modalImage = imageModal.querySelector('#modalImage');
+                modalImage.src = '';
+            });
+        });
+    </script>
 </body>
 
 </html>

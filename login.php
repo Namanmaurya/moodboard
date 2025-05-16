@@ -36,6 +36,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta charset="UTF-8">
     <title>Login - MoodBoard</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
     <style>
         body {
             background: linear-gradient(to right, #f8f9fa, #e0f7fa);
@@ -52,7 +53,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             padding: 2rem;
             border-radius: 20px;
             box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
-            background: #ffffff;
+            background: linear-gradient(to right, #f8f9fa, #e0f7fa);
         }
 
         .login-card h2 {

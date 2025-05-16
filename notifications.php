@@ -21,11 +21,12 @@ $result = mysqli_query($conn, $sql);
 <head>
     <title>Notifications - Daily MoodBoard</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
 </head>
 <body>
 <?php include 'includes/header.php'; ?>
 <div class="container mt-4">
-    <h3>🔔 Notifications</h3>
+    <h3><i class="fa-solid fa-bell"></i> Notifications</h3>
     <?php if (mysqli_num_rows($result) > 0): ?>
         <?php while ($row = mysqli_fetch_assoc($result)): ?>
             <div class="alert alert-light border">
